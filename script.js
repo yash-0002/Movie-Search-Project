@@ -3,9 +3,13 @@ let searchInput = document.querySelector("#searchInput")
 let targetUrl = "https://www.omdbapi.com/?";
 const APIKey = "b70fb34d"
 const movieSection = document.querySelector("#movieResults")
+const fav = document.querySelector("#favorites")
 
+let favMovie = JSON.parse(localStorage.getItem("fav")) || [];
 
-// getting userInputS
+document.addEventListener("DOMContentLoaded", displayFav)
+
+// getting userInput
 let intervalId = 0;
 function getUserInput(){
   let userInput = searchInput.value
@@ -23,7 +27,7 @@ function getUserInput(){
 
 // fetching movies 
 async function fetchMovies(query){
-  targetUrl += `apikey=${APIKey}&s=${query}`
+  targetUrl = `https://www.omdbapi.com/?apikey=${APIKey}&s=${query}`
 
   const response = await fetch(targetUrl)
   const data =  await response.json()
@@ -37,6 +41,9 @@ async function fetchMovies(query){
 
 // display movie Cards
 function displayMovieCards(movies){
+
+  movieSection.innerHTML = ""; 
+
   movies.forEach((movie)=>{
 
     const movieCard = document.createElement("div")
@@ -44,12 +51,65 @@ function displayMovieCards(movies){
     <img src="${movie.Poster}" alt="${movie.Title}">
     <h3>${movie.Title}</h3>
     <p>${movie.Year}</p>
-    <button>Add to Favourites</button>
+    <button onClick="addToFav(
+      '${movie.imdbID}',
+      '${movie.Poster}', 
+      '${movie.Title.replace("'", "\\"+"'")}', 
+      '${movie.Year}')">
+        Add to Favourites
+    </button>
     `
-    movieCard.classList = "movie-card"
+    movieCard.className = "movie-card"
     movieSection.appendChild(movieCard)
   })
 }
+
+// implementimg remove from fav function 
+function removeFromFav(id){
+  favMovie = favMovie.filter(movie => movie.id != id)
+  localStorage.setItem("fav", JSON.stringify(favMovie))
+  displayFav()
+}
+
+
+// display fav movie cards
+function displayFav(){
+
+  fav.innerHTML = "";
+
+  favMovie.forEach((movie)=>{
+
+    const movieCard = document.createElement("div")
+    movieCard.innerHTML = `
+    <img src="${movie.poster}" alt="${movie.title}">
+    <h3>${movie.title}</h3>
+    <p>${movie.year}</p>
+    <button onClick="removeFromFav('${movie.id}')">
+        Remove
+    </button>
+    `
+    movieCard.className = "movie-card"
+    fav.appendChild(movieCard)
+  })
+}
+
+// setting add to fav button  
+function addToFav(id, poster, title, year){
+  
+  if(favMovie.some(movie => movie.id == id )){
+    alert("Movie already exists in favourites!");
+    return;
+  }
+  
+  favMovie.push({id, poster, title, year})
+  localStorage.setItem("fav", JSON.stringify(favMovie))
+  displayFav()
+}
+
+
+
+
+
 
 // clearing the searchButton
 let movieKeyword ;
@@ -57,5 +117,7 @@ searchBtn.addEventListener("click",()=>{
   movieKeyword = getUserInput()
   
   fetchMovies(movieKeyword)
+
+
 })
 
